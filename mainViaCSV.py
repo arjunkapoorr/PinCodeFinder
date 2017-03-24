@@ -30,7 +30,7 @@ def printinfo(Officename,Sub_distname,Districtname,Statename):
 
 def main():
     # declaring variable and converting user input to a list
-    reader = csv.DictReader(open('test.csv'))
+    reader = csv.DictReader(open('Main.csv'))
     user_input = raw_input("Enter the location of which you want the Pin Code")
     user_input = user_input.split()
     length = len(user_input)
@@ -154,7 +154,7 @@ def main():
                     sys.exit(0)
 
     #If Statename not given, Search for districtname and eliminate redundant searching
-    reader1 = csv.DictReader(open('test.csv'))
+    reader1 = csv.DictReader(open('Main.csv'))
     if Statename == "":
 
         for row in reader1:
@@ -210,7 +210,7 @@ def main():
                     sys.exit(0)
 
     #If statename, districtname both unavailable. found on the basis of Sub-distname and officename
-    reader2 = csv.DictReader(open('test.csv'))
+    reader2 = csv.DictReader(open('Main.csv'))
     if Statename == "" and Districtname == "":
         for row in reader2:
             if len(str(row['Sub-distname']).lower().split()) == 1:
@@ -249,7 +249,7 @@ def main():
                     sys.exit(0)
 
     # when nothing is given except office name (most refined search. Will give correct output. Search directly from file)
-    reader3 = csv.DictReader(open('test.csv'))
+    reader3 = csv.DictReader(open('Main.csv'))
     if Statename == "" and Districtname == "" and Sub_distname == "":
 
         for row in reader3:
