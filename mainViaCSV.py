@@ -2,8 +2,45 @@ import csv
 import sys
 import requests
 import json
+from collections import Counter
+import re
+
 def result(pincode):
     print "Pincode for the location specified is " + pincode
+
+def autocorrect(input_word):
+    def words(text): return re.findall(r'\w+', text.lower())
+
+    WORDS = Counter(words(open('autocorrect.txt').read()))
+
+    def P(word, N=sum(WORDS.values())):
+        return WORDS[word] / N
+
+    def correction(word):
+        return max(candidates(word), key=P)
+
+    def candidates(word):
+        return (known([word]) or known(edits1(word)) or known(edits2(word)) or [word])
+
+    def known(words):
+        return set(w for w in words if w in WORDS)
+
+    def edits1(word):
+        letters = 'abcdefghijklmnopqrstuvwxyz'
+        splits = [(word[:i], word[i:]) for i in range(len(word) + 1)]
+        deletes = [L + R[1:] for L, R in splits if R]
+        transposes = [L + R[1] + R[0] + R[2:] for L, R in splits if len(R) > 1]
+        replaces = [L + c + R[1:] for L, R in splits if R for c in letters]
+        inserts = [L + c + R for L, R in splits for c in letters]
+        return set(deletes + transposes + replaces + inserts)
+
+    def edits2(word):
+        return (e2 for e1 in edits1(word) for e2 in edits1(e1))
+
+    return correction(input_word)
+
+
+
 
 def callwithAPI(user_input):
     query = ""
@@ -30,12 +67,20 @@ def printinfo(Officename,Sub_distname,Districtname,Statename):
 
 def main():
     # declaring variable and converting user input to a list
-    reader = csv.DictReader(open('test.csv'))
-    user_input = raw_input("Enter the location of which you want the Pin Code")
-    user_input = user_input.split()
-    length = len(user_input)
+    reader = csv.DictReader(open('Main.csv'))
+    user_inputraw = raw_input("Enter the location of which you want the Pin Code")
+    user_inputraw = user_inputraw.split()
+    length = len(user_inputraw)
+    user_input = []
     if length > 8:
         sys.exit('Enter a short query')
+    for keyword in user_inputraw:
+        corrected = autocorrect(keyword)
+        user_input.append(corrected)
+    # this is the auto corrected output
+    print user_input
+
+
     Sub_distname = ""
     Village = ""
     Officename = ""
@@ -154,7 +199,7 @@ def main():
                     sys.exit(0)
 
     #If Statename not given, Search for districtname and eliminate redundant searching
-    reader1 = csv.DictReader(open('test.csv'))
+    reader1 = csv.DictReader(open('Main.csv'))
     if Statename == "":
 
         for row in reader1:
@@ -210,7 +255,7 @@ def main():
                     sys.exit(0)
 
     #If statename, districtname both unavailable. found on the basis of Sub-distname and officename
-    reader2 = csv.DictReader(open('test.csv'))
+    reader2 = csv.DictReader(open('Main.csv'))
     if Statename == "" and Districtname == "":
         for row in reader2:
             if len(str(row['Sub-distname']).lower().split()) == 1:
@@ -249,7 +294,7 @@ def main():
                     sys.exit(0)
 
     # when nothing is given except office name (most refined search. Will give correct output. Search directly from file)
-    reader3 = csv.DictReader(open('test.csv'))
+    reader3 = csv.DictReader(open('Main.csv'))
     if Statename == "" and Districtname == "" and Sub_distname == "":
 
         for row in reader3:
